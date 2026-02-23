@@ -1,0 +1,77 @@
+# TASK 7 - Sales Summary using SQLite (WITHOUT PANDAS)
+
+import sqlite3
+import matplotlib.pyplot as plt
+
+# Step 1: Connect to database
+conn = sqlite3.connect("sales_data.db")
+cursor = conn.cursor()
+
+# Step 2: Create table
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS sales (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    product TEXT,
+    quantity INTEGER,
+    price REAL
+)
+""")
+conn.commit()
+
+# Step 3: Clear old data (optional)
+cursor.execute("DELETE FROM sales")
+conn.commit()
+
+# Step 4: Insert sample data
+sales_data = [
+    ("Laptop", 5, 50000),
+    ("Mobile", 10, 20000),
+    ("Tablet", 7, 15000),
+    ("Laptop", 3, 52000),
+    ("Mobile", 6, 21000)
+]
+
+cursor.executemany(
+    "INSERT INTO sales (product, quantity, price) VALUES (?, ?, ?)",
+    sales_data
+)
+conn.commit()
+
+# Step 5: Run SQL Query
+query = """
+SELECT product,
+       SUM(quantity) AS total_quantity,
+       SUM(quantity * price) AS revenue
+FROM sales
+GROUP BY product;
+"""
+
+cursor.execute(query)
+results = cursor.fetchall()
+
+# Step 6: Print Results
+print("Sales Summary:")
+print("Product | Total Quantity | Revenue")
+print("------------------------------------")
+
+products = []
+revenues = []
+
+for row in results:
+    product, total_qty, revenue = row
+    print(f"{product} | {total_qty} | {revenue}")
+    products.append(product)
+    revenues.append(revenue)
+
+# Step 7: Create Bar Chart
+plt.bar(products, revenues)
+
+plt.title("Revenue by Product")
+plt.xlabel("Product")
+plt.ylabel("Revenue")
+plt.tight_layout()
+plt.savefig("sales_chart.png")
+plt.show()
+
+# Step 8: Close connection
+conn.close()
